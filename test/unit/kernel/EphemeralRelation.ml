@@ -25,7 +25,10 @@ let endless () =
     (fun () ->
       Ok
         (Rnt.Kernel.Generator.cursor_of (fun ~yield ->
-             let rec from n = yield (member n); from (n + 1) in
+             let rec from n =
+               yield (member n);
+               from (n + 1)
+             in
              from 0 ) ) )
 
 let values tuples =
@@ -72,7 +75,8 @@ let refuses_to_scan_without_end () =
     match Protocols.Relation.contains relation (member 9) with
     | Error condition ->
         check bool "it fails as undecidable instead of scanning" true
-          (BatString.starts_with (Concepts.Condition.to_string_hum condition)
+          (BatString.starts_with
+             (Concepts.Condition.to_string_hum condition)
              "undecidable-membership" )
     | Ok _ -> fail "an endless relation with no test decided membership" )
 

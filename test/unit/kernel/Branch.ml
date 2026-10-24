@@ -10,10 +10,8 @@ let under a b = K.Path.(of_list (to_list a @ to_list b))
 let shelf = K.Scope.path library "shelf"
 let s v = C.Value.String v
 let title = BatMap.String.singleton "title" {P.Schematics.domain= "string"; provenance= []}
-
 let book t = {C.Tuple.type_= "book"; attributes= BatMap.String.singleton "title" (s t)}
 let books titles = K.EphemeralRelation.literal title (List.map book titles)
-
 let titles relation = ok (Helpers.titles relation)
 let read root path = titles (ok (K.Path.lookup root path))
 
@@ -118,7 +116,10 @@ let endless () =
     (fun () ->
       Ok
         (K.Generator.cursor_of (fun ~yield ->
-             let rec from n = yield (book (string_of_int n)); from (n + 1) in
+             let rec from n =
+               yield (book (string_of_int n));
+               from (n + 1)
+             in
              from 0 ) ) )
 
 (* A toy language: "endless" answers titles without end, "shout r" the
@@ -162,7 +163,9 @@ let with_toys ?evaluations root =
   ignore (ok (K.Initialization.mount root "toys"));
   ignore
     (ok
-       (K.Path.update root K.Path.("toys" @/ "evaluator" @/ this) "toy" None
+       (K.Path.update root
+          K.Path.("toys" @/ "evaluator" @/ this)
+          "toy" None
           (Some (toy ?evaluations ())) ) )
 
 let toy_program ?root evaluator source = K.Program.make ?root ~evaluator ~source (parse source)
@@ -174,8 +177,7 @@ let run root program =
 let a_program_runs_through_the_evaluator_it_names () =
   let root = fresh ["Codd"] in
   with_toys root;
-  publish root
-    ["named", Some (K.EphemeralRelation.of_program title (toy_program "toys:toy" "this"))];
+  publish root ["named", Some (K.EphemeralRelation.of_program title (toy_program "toys:toy" "this"))];
   check (list Helpers.value) "stored in a branch and read back, it runs"
     [s "this"]
     (read root (under master (K.Scope.path library "named")));
@@ -236,7 +238,9 @@ let a_denial_without_end_cannot_be_installed () =
   let root = fresh [] in
   with_toys root;
   let endless = K.EphemeralRelation.of_program title (toy_program "toys:toy" "endless") in
-  match K.Scope.publish root ~branch:"master" ~home:library ~denials:["endless", Some endless] [] with
+  match
+    K.Scope.publish root ~branch:"master" ~home:library ~denials:["endless", Some endless] []
+  with
   | Ok () -> fail "a denial without end was installed"
   | Error condition ->
       check bool "the state holding it cannot be judged" true

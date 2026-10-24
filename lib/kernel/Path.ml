@@ -49,11 +49,7 @@ let walking ?missing f g handle path =
 let lookup handle path = walking (fun _ _ f -> f ()) Result.ok handle path
 
 let find handle path =
-  walking
-    ~missing:(fun () -> Ok None)
-    (fun _ _ f -> f ())
-    (fun h -> Ok (Some h))
-    handle path
+  walking ~missing:(fun () -> Ok None) (fun _ _ f -> f ()) (fun h -> Ok (Some h)) handle path
 
 let update handle path key reference value =
   let open Utilities.Result in

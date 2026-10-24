@@ -70,5 +70,4 @@ let make ?root ~evaluator ~source kind =
 
 let load root ~evaluator ~source =
   with_evaluator root evaluator (fun found ->
-      Protocols.Evaluator.parse found source
-      |> Result.map (make ~root ~evaluator ~source) )
+      Protocols.Evaluator.parse found source |> Result.map (make ~root ~evaluator ~source) )

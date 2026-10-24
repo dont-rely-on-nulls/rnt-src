@@ -79,8 +79,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
 
   let node tx {attributes; _} =
     let open Utilities.Result in
-    AttributeM.find tx attributes
-    |>> Option.to_result ~none:(Error.incomplete_tuple attributes)
+    AttributeM.find tx attributes |>> Option.to_result ~none:(Error.incomplete_tuple attributes)
 
   let empty tx ~type_ () =
     let open Utilities.Result in

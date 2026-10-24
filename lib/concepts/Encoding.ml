@@ -216,7 +216,7 @@ module Value = struct
     Bencode.with_tag '?' value
     |>> Bencode.as_list
     |> Result.map Utilities.List.hd_opt
-    |>> (function None -> Ok None | Some v -> f v |> Result.map Option.some)
+    |>> function None -> Ok None | Some v -> f v |> Result.map Option.some
 end
 
 module Field = struct

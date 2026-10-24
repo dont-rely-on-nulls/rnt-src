@@ -59,8 +59,7 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
       end
       |> Helpers.condition_as_failure
     in
-    check (list string) "the stored program reads the book it was defined over" ["title"]
-      attributes;
+    check (list string) "the stored program reads the book it was defined over" ["title"] attributes;
     check (list Helpers.value) "read through the branch, the stored program runs"
       [Concepts.Value.String "SQL and Relational Theory"]
       shelved

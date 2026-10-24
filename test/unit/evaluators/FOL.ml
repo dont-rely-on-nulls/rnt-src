@@ -21,7 +21,10 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
 
   let employees = Rnt.Evaluators.FOL.Base Kernel.Path.("employee" @/ this)
   let names = Rnt.Evaluators.FOL.Project (employees, BatFingerTree.singleton "name")
-  let heading = BatMap.String.singleton "name" {Protocols.Schematics.domain= "string"; provenance= []}
+
+  let heading =
+    BatMap.String.singleton "name" {Protocols.Schematics.domain= "string"; provenance= []}
+
   let directory entries = Kernel.Prototype.(mixture [Directory.of_properties entries])
 
   let eval within term =
@@ -116,9 +119,7 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let* relation = H.relation conn ["name"; "age"] [employee "Alaric" 42] in
         let* stored = store conn names in
         let* root = namespace ["employee", relation; "stored", stored] in
-        let* plan =
-          Rnt.Evaluators.FOL.(instantiate root (Base Kernel.Path.("stored" @/ this)))
-        in
+        let* plan = Rnt.Evaluators.FOL.(instantiate root (Base Kernel.Path.("stored" @/ this))) in
         let* result = Rnt.Evaluators.FOL.execute plan in
         drain result
       end
@@ -217,7 +218,8 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
       (Kernel.EphemeralRelation.temporary description)
       (fun () -> Ok (Kernel.Generator.cursor_of ~finally:(fun () -> closed := true) (count 0)))
 
-  let values source = Rnt.Evaluators.FOL.(execute (Project (Base source, BatFingerTree.singleton "value")))
+  let values source =
+    Rnt.Evaluators.FOL.(execute (Project (Base source, BatFingerTree.singleton "value")))
 
   let pull_one_tuple_at_a_time () =
     let produced = ref 0 and closed = ref false in
@@ -248,7 +250,8 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
     check bool "it fails as undecidable instead of reading without end" true
       ( match asked with
       | Error condition ->
-          BatString.starts_with (Concepts.Condition.to_string_hum condition)
+          BatString.starts_with
+            (Concepts.Condition.to_string_hum condition)
             "undecidable-membership"
       | Ok _ -> false )
 

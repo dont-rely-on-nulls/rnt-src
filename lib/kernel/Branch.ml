@@ -54,9 +54,9 @@ module Make (S : Abstract.Storage.STORAGE) = struct
       let* previous =
         Bencode.field "previous" fields
         |>> Value.option_of_bencode (fun v ->
-                Value.hash_of_bencode v
-                |> Result.map (fun hash -> S.Hash hash)
-                |> Result.map (SI.Pointer.make Loader.load) )
+            Value.hash_of_bencode v
+            |> Result.map (fun hash -> S.Hash hash)
+            |> Result.map (SI.Pointer.make Loader.load) )
       in
       Ok {multigroups; previous}
   end
@@ -107,9 +107,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
 
       method protocols : Protocols.Handle.protocol list =
         let bind =
-          Option.map
-            (fun root -> {EphemeralRelation.root; within= Protocols.Handle.make {<>}})
-            root
+          Option.map (fun root -> {EphemeralRelation.root; within= Protocols.Handle.make {<>}}) root
         in
         let multigroups =
           Prototype.mixture_of node (fun make node ->

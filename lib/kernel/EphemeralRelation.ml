@@ -138,7 +138,8 @@ let enumerate_owned relation =
            end )
 
 let asking f relation =
-  Protocols.Handle.releasing relation (fun () -> Result.bind (Protocols.Relation.require relation) f)
+  Protocols.Handle.releasing relation (fun () ->
+      Result.bind (Protocols.Relation.require relation) f )
 
 let generated ?program ?within name description value =
   let invoking f () =
@@ -163,8 +164,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
   module SI = Storage.Make (S)
   module R = SubstantialRelation.Make (S)
 
-  let restore ?program ?within ({Persisted.name; schematics; pointer} : Persisted.t)
-      description =
+  let restore ?program ?within ({Persisted.name; schematics; pointer} : Persisted.t) description =
     generated ?program ?within name description
       {name= Some name; schematics= `Persisted schematics; pointer= Some pointer}
 

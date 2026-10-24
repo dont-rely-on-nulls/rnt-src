@@ -25,7 +25,9 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let* _ = update root ("system" @/ "branch" @/ this) "client" None (Some branch) in
         let* tip = address branch in
         let session = Session.make conn {Protocols.Session.snapshot= tip} in
-        let* _ = update root ("system" @/ "session" @/ this) "client" None (Protocols.Handle.copy session) in
+        let* _ =
+          update root ("system" @/ "session" @/ this) "client" None (Protocols.Handle.copy session)
+        in
         let library =
           "system" @/ "session" @/ "client" @/ "branch" @/ "multigroup" @/ "library" @/ this
         in

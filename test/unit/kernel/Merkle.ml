@@ -14,10 +14,7 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let open Utilities.Result in
         let* tx = S.start conn in
         let* node =
-          T.empty
-          |> T.insert tx "k1" "v1"
-          |>> T.insert tx "k2" "v2"
-          |>> T.insert tx "k3" "v3"
+          T.empty |> T.insert tx "k1" "v1" |>> T.insert tx "k2" "v2" |>> T.insert tx "k3" "v3"
         in
         let* node' = T.insert tx "k3" "toodles" node in
         let* v1 = T.lookup tx "k1" node in
@@ -73,10 +70,7 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let open Utilities.Result in
         let* tx = S.start conn in
         let* node =
-          T.empty
-          |> T.insert tx "k1" "v1"
-          |>> (T.insert tx "k2" "v2")
-          |>> (T.insert tx "k3" "v3")
+          T.empty |> T.insert tx "k1" "v1" |>> T.insert tx "k2" "v2" |>> T.insert tx "k3" "v3"
         in
         let* () = S.commit tx in
         Ok (T.hash_of node)
@@ -105,10 +99,7 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let open Utilities.Result in
         let* tx = S.start conn in
         let* node =
-          T.empty
-          |> T.insert tx "k1" "v1"
-          |>> (T.insert tx "k2" "v2")
-          |>> (T.insert tx "k3" "v3")
+          T.empty |> T.insert tx "k1" "v1" |>> T.insert tx "k2" "v2" |>> T.insert tx "k3" "v3"
         in
         let* keys = T.fold_left tx (fun acc k _ -> k :: acc) [] node |> Result.map List.rev in
         let* values = T.fold_left tx (fun acc _ v -> v :: acc) [] node |> Result.map List.rev in

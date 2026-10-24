@@ -72,8 +72,8 @@ module Make (S : Abstract.Storage.STORAGE) = struct
 
     let unjudgeable denial =
       condition "unjudgeable-denial"
-        "A denial does not declare that reading it with nothing bound ends, so the state cannot \
-         be judged"
+        "A denial does not declare that reading it with nothing bound ends, so the state cannot be \
+         judged"
         ("denial" |=| Concepts.Value.String denial)
   end
 
@@ -230,7 +230,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
         let derive f node' =
           Protocols.Handle.require Protocols.Addressable.from node'
           |> Result.map Protocols.Addressable.address
-          |>> (fun addr -> self#deriving (f addr))
+          |>> fun addr -> self#deriving (f addr)
         in
         Protocols.
           [ Addressable.make self;

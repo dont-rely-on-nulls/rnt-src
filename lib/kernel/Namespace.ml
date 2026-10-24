@@ -26,10 +26,7 @@ class namespace =
 
     method find key =
       let open Utilities.Option in
-      Atomic.get entries
-      |> BatMap.find_opt key
-      |>> Protocols.Handle.copy
-      |> Result.ok
+      Atomic.get entries |> BatMap.find_opt key |>> Protocols.Handle.copy |> Result.ok
   end
 
 let make () = Protocols.Handle.make (new namespace)
