@@ -44,20 +44,20 @@ let attribute home relation text =
 (* every relation of a branch state, as multigroup:schema:relation *)
 let catalog_of branch =
   let open Utilities.Result in
-  let name prefix last = String.concat ":" (List.rev (last :: prefix)) in
+  let name prefix last = Utilities.FingerTree.join (BatFingerTree.reverse (BatFingerTree.cons prefix last)) ":" in
   let rec down prefix handle properties =
     let* level = Path.find handle Path.(List.hd properties @/ this) in
     match level, List.tl properties with
-    | None, _ -> Ok []
+    | None, _ -> Ok BatFingerTree.empty
     | Some level, [] ->
         let* listing = Protocols.Handle.require Protocols.Directory.from level in
         let* names = Protocols.Directory.list listing in
-        Ok (List.map (name prefix) (BatFingerTree.to_list names))
+        Ok (BatFingerTree.map (name prefix) names)
     | Some level, rest ->
         let* named = Protocols.Directory.children level in
-        Utilities.List.concat_map (fun (n, child) -> down (n :: prefix) child rest) named
+        Utilities.FingerTree.concat_mapm (fun (n, child) -> down (BatFingerTree.cons prefix n) child rest) named
   in
-  down [] branch ["multigroup"; "schema"; "relation"]
+  down BatFingerTree.empty branch ["multigroup"; "schema"; "relation"]
 
 let rec make branch home =
   Prototype.mixture
@@ -88,7 +88,7 @@ let rec make branch home =
             let* previous = Path.find branch Path.("previous" @/ this) in
             Ok (Option.map (fun p -> make p home) previous)
 
-          method catalog = catalog_of branch
+          method catalog = catalog_of branch |> Result.map BatFingerTree.to_list (* FIXME: use finger trees thoroughly *)
         end ]
 
 let heads = Path.("system" @/ "branch" @/ this)

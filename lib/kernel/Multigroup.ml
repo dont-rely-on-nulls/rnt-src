@@ -108,18 +108,18 @@ module Make (S : Abstract.Storage.STORAGE) = struct
     let open Utilities.Result in
     let* listing = Protocols.Handle.require Protocols.Directory.from h in
     let* found = Protocols.Directory.find listing property in
-    let* children = Option.fold ~none:(Ok []) ~some:Protocols.Directory.children found in
-    List.map
+    let* children = Option.fold ~none:(Ok BatFingerTree.empty) ~some:Protocols.Directory.children found in
+    BatFingerTree.map
       (fun (name, child) ->
         Prototype.Associative.admission admit name child |> Result.map (fun p -> name, p) )
       children
-    |> Utilities.List.sequence
+    |> Utilities.FingerTree.sequence
 
   let tree_of tx admissions =
     let open Utilities.Result in
-    List.map (fun (name, store) -> store tx |> Result.map (fun addr -> name, addr)) admissions
-    |> Utilities.List.sequence
-    |>> T.of_list tx
+    BatFingerTree.map (fun (name, store) -> store tx |> Result.map (fun addr -> name, addr)) admissions
+    |> Utilities.FingerTree.sequence
+    |>> T.of_finger_tree tx
 
   let admit_schema _ h =
     let open Utilities.Result in
@@ -223,7 +223,8 @@ module Make (S : Abstract.Storage.STORAGE) = struct
       method check =
         let open Utilities.Result in
         let* named = Protocols.Directory.children (relations ?bind storage denial_tree) in
-        Utilities.List.concat_map (held ?bind) named
+        let named = BatFingerTree.to_list named in (* FIXME *)
+        Utilities.List.concat_mapm (held ?bind) named
 
       method protocols : Protocols.Handle.protocol list =
         let open Utilities.Result in

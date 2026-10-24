@@ -133,7 +133,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
               object
                 method check =
                   let* named = Directory.children multigroups in
-                  Utilities.List.concat_map admits named
+                  Utilities.List.concat_mapm admits (BatFingerTree.to_list named) (* FIXME: use finger trees *)
               end;
             Prototype.Associative.(
               of_properties

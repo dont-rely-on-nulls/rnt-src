@@ -15,9 +15,9 @@ let children directory =
   let open Utilities.Result in
   let* listing = Handle.require from directory in
   let* names = list listing in
-  BatFingerTree.to_list names
-  |> List.map (fun name ->
+  names
+  |> BatFingerTree.map (fun name ->
       let* found = find listing name in
       Ok (Option.map (fun child -> name, child) found) )
-  |> Utilities.List.sequence
-  |> Result.map (List.filter_map Fun.id)
+  |> Utilities.FingerTree.sequence
+  |> Result.map (Utilities.FingerTree.filter_map Fun.id)

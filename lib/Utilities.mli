@@ -36,6 +36,7 @@ module FingerTree : sig
   val foldm_left : ('a -> 'b -> ('a, 'e) result) -> 'a -> 'b BatFingerTree.t -> ('a, 'e) result
   val join : string BatFingerTree.t -> string -> string
   val filter_map : ('a -> 'b option) -> 'a BatFingerTree.t -> 'b BatFingerTree.t
+  val concat : 'a BatFingerTree.t BatFingerTree.t -> 'a BatFingerTree.t
   val concat_mapm : ('a -> ('b BatFingerTree.t, 'e) result) -> 'a BatFingerTree.t -> ('b BatFingerTree.t, 'e) result
 end
 
