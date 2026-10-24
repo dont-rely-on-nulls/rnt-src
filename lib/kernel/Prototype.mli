@@ -10,10 +10,6 @@ module Directory : sig
     (string * (unit -> (Protocols.Handle.t option, Concepts.Condition.condition) result)) list ->
     Protocols.Handle.protocol
 
-  (** the names a directory lists, and what each reaches. *)
-  val children :
-    Protocols.Handle.t -> ((string * Protocols.Handle.t) list, Concepts.Condition.condition) result
-
   module OfTree
       (S : Abstract.Storage.STORAGE)
       (K : Merkle.KEY with type t = string)

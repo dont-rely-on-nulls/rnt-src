@@ -98,17 +98,6 @@ module Directory = struct
   let of_properties props =
     List.map (fun (p, h) -> p, fun () -> Ok (Some h)) props |> of_properties'
 
-  let children directory =
-    let open Utilities.Result in
-    let* listing = Protocols.Handle.require Protocols.Directory.from directory in
-    let* names = Protocols.Directory.list listing in
-    BatFingerTree.to_list names
-    |> List.map (fun name ->
-        let* found = Protocols.Directory.find listing name in
-        Ok (Option.map (fun child -> name, child) found) )
-    |> Utilities.List.sequence
-    |> Result.map (List.filter_map Fun.id)
-
   module OfTree
       (S : Abstract.Storage.STORAGE)
       (K : Merkle.KEY with type t = string)
