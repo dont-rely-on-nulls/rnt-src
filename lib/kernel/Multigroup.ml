@@ -108,7 +108,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
     let open Utilities.Result in
     let* listing = Protocols.Handle.require Protocols.Directory.from h in
     let* found = Protocols.Directory.find listing property in
-    let* children = Option.fold ~none:(Ok []) ~some:Prototype.Directory.children found in
+    let* children = Option.fold ~none:(Ok []) ~some:Protocols.Directory.children found in
     List.map
       (fun (name, child) ->
         Prototype.Associative.admission admit name child |> Result.map (fun p -> name, p) )
@@ -222,7 +222,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
 
       method check =
         let open Utilities.Result in
-        let* named = Prototype.Directory.children (relations ?bind storage denial_tree) in
+        let* named = Protocols.Directory.children (relations ?bind storage denial_tree) in
         Utilities.List.concat_map (held ?bind) named
 
       method protocols : Protocols.Handle.protocol list =

@@ -132,7 +132,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
             Admission.make
               object
                 method check =
-                  let* named = Prototype.Directory.children multigroups in
+                  let* named = Directory.children multigroups in
                   Utilities.List.concat_map admits named
               end;
             Prototype.Associative.(
