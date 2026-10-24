@@ -8,13 +8,21 @@
      RNT   f Cursor:32 Limit:32                                 fetch
      RNT   c Cursor:32                                          close
      node  n Reader:32 Limit:32                                 next
+     node  l (Size:32 Segment)...                               lookup
      both  b Exhausted:8 (Size:32 Tuple)...                     a batch
+     RNT   r Reader:32                                          a reader
      both  e Message                                            a failure
 
-   fetch and next are answered with a batch or a failure, invoke and
-   close not at all, so a function that cannot be applied fails the
-   first fetch. Calls nest: until its answer comes, whoever waits serves
-   the calls that come instead. *)
+   fetch and next are answered with a batch or a failure, lookup with a
+   reader or a failure, invoke and close not at all. The node applies
+   the function at the first fetch, so a function that cannot be applied
+   fails it. Calls nest: until its answer comes, whoever waits serves the
+   calls that come instead.
+
+   lookup asks for the relation at a path, within what the program runs
+   within, and FOL answers it. The node reads it with next like an
+   input, and the cursor being fetched, whose program asked, keeps it
+   until it closes. *)
 
 open Rnt
 
@@ -158,31 +166,40 @@ let batch_message {Protocols.Cursor.tuples; exhausted} =
     tuples;
   Buffer.contents buffer
 
+let reader_message reader =
+  let buffer = Buffer.create 5 in
+  Buffer.add_char buffer 'r'; int32 buffer reader; Buffer.contents buffer
+
 let failure_message condition = "e" ^ Concepts.Condition.to_string_hum condition
 
-let batch_of message =
+(* The pieces of [message] from [at] on, each behind its size in four bytes. *)
+let chunks message at =
   let length = String.length message in
-  let rec tuples at read =
-    if at = length then Ok (List.rev read)
+  let rec read at pieces =
+    if at = length then Ok (List.rev pieces)
     else if at + 4 > length then Error (Error.unexpected ())
     else
       let size = Int32.to_int (String.get_int32_be message at) land 0xffff_ffff in
       if at + 4 + size > length then Error (Error.unexpected ())
-      else
-        Result.bind
-          (Translator.decode (String.sub message (at + 4) size))
-          (fun tuple -> tuples (at + 4 + size) (tuple :: read))
+      else read (at + 4 + size) (String.sub message (at + 4) size :: pieces)
   in
-  Result.map
-    (fun read ->
-      {Protocols.Cursor.tuples= BatFingerTree.of_list read; exhausted= message.[1] <> '\000'} )
-    (tuples 2 [])
+  read at []
+
+let batch_of message =
+  let open Utilities.Result in
+  let* terms = chunks message 2 in
+  let* tuples = List.map Translator.decode terms |> Utilities.List.sequence in
+  Ok {Protocols.Cursor.tuples= BatFingerTree.of_list tuples; exhausted= message.[1] <> '\000'}
 
 module Make (T : TRANSPORT) = struct
-  (* The cursors over its inputs that the node reads through us, by the
-     reader id it knows each by, and the last id given to a reader or a
-     cursor. *)
-  type node = {transport: T.t; readers: (int, Protocols.Handle.t) Hashtbl.t; mutable last: int}
+  (* The root programs find their evaluators in, the cursors the node
+     reads through us by the reader id it knows each by, and the last id
+     given to a reader or a cursor. *)
+  type node =
+    { root: Protocols.Handle.t;
+      transport: T.t;
+      readers: (int, Protocols.Handle.t) Hashtbl.t;
+      mutable last: int }
 
   let fresh node =
     node.last <- node.last + 1;
@@ -198,20 +215,45 @@ module Make (T : TRANSPORT) = struct
     let* scan = Protocols.Cursor.require cursor in
     Protocols.Cursor.fetch scan limit
 
-  let rec await node =
+  let lookup node within message =
+    let open Utilities.Result in
+    let* path = chunks message 1 in
+    let program =
+      Evaluators.FOL.program ~root:node.root (Evaluators.FOL.Base (Kernel.Path.of_list path))
+    in
+    let* relation =
+      Protocols.Handle.releasing program (fun () ->
+          let* executable = Protocols.Executable.require program in
+          Protocols.Executable.invoke executable [] ~within )
+    in
+    let* cursor = Kernel.EphemeralRelation.enumerate_owned relation in
+    let reader = fresh node in
+    Hashtbl.replace node.readers reader cursor;
+    Ok reader
+
+  (* [own] keeps a reader the node looked up for the cursor being fetched. *)
+  let rec await node within own =
     let open Utilities.Result in
     let* message = T.receive node.transport in
+    let reply answer =
+      let* () = T.send node.transport answer in
+      await node within own
+    in
     match if message = "" then ' ' else message.[0] with
     | 'b' when String.length message >= 2 -> batch_of message
     | 'e' -> Error (Error.failed (String.sub message 1 (String.length message - 1)))
-    | 'n' when String.length message = 9 ->
-        let answer =
-          match next node message with
-          | Ok batch -> batch_message batch
-          | Error c -> failure_message c
-        in
-        let* () = T.send node.transport answer in
-        await node
+    | 'n' when String.length message = 9 -> (
+        reply
+        @@
+        match next node message with
+        | Ok batch -> batch_message batch
+        | Error c -> failure_message c )
+    | 'l' -> (
+        reply
+        @@
+        match lookup node within message with
+        | Ok reader -> own reader; reader_message reader
+        | Error c -> failure_message c )
     | _ -> Error (Error.unexpected ())
 
   let forget node readers =
@@ -221,14 +263,18 @@ module Make (T : TRANSPORT) = struct
         Hashtbl.remove node.readers reader )
       readers
 
-  class cursor node id readers =
+  (* It keeps the readers of its inputs, and of what its program looked up. *)
+  class cursor node id inputs within =
     object (self)
       inherit Kernel.Lifecycle.counted
       inherit Kernel.Identity.of_id
+      val mutable readers = inputs
       method to_string = "beam-cursor"
 
       method fetch limit =
-        Result.bind (T.send node.transport (fetch_message id limit)) (fun () -> await node)
+        Result.bind
+          (T.send node.transport (fetch_message id limit))
+          (fun () -> await node within (fun reader -> readers <- reader :: readers))
 
       method destroy =
         ignore (T.send node.transport (close_message id));
@@ -249,12 +295,12 @@ module Make (T : TRANSPORT) = struct
       [] inputs
     |> Result.map List.rev
 
-  let invoke node program inputs =
+  let invoke node program inputs ~within =
     let open Utilities.Result in
     let* readers = open_readers node inputs in
     let id = fresh node in
     match T.send node.transport (invoke_message id program readers) with
-    | Ok () -> Ok (Protocols.Handle.make (new cursor node id readers))
+    | Ok () -> Ok (Protocols.Handle.make (new cursor node id readers within))
     | Error c -> forget node readers; Error c
 
   (* The relation reads its inputs each time it is enumerated, so it holds them. *)
@@ -266,16 +312,20 @@ module Make (T : TRANSPORT) = struct
       Error (Error.unheld_input ())
     end
 
-  (* TODO: A program should declare its modes as it declares its heading.
+  (* It looks relations up within [within] too, so it holds that as well.
+     TODO: A program should declare its modes as it declares its heading.
      Until then every program is taken to end. *)
-  let generate node program inputs =
+  let generate node program inputs ~within =
     let open Utilities.Result in
-    let* inputs = hold inputs in
-    Ok
-      (Kernel.EphemeralRelation.instantiate ~inputs program.heading
-         ~modes:(fun () -> Ok [Concepts.Mode.mode [] Concepts.Cardinality.Finite])
-         (Kernel.EphemeralRelation.temporary program.heading)
-         (fun () -> invoke node program inputs) )
+    let* held = hold (within :: inputs) in
+    match held with
+    | [] -> Error (Error.unheld_input ())
+    | within :: inputs ->
+        Ok
+          (Kernel.EphemeralRelation.instantiate ~inputs:held program.heading
+             ~modes:(fun () -> Ok [Concepts.Mode.mode [] Concepts.Cardinality.Finite])
+             (Kernel.EphemeralRelation.temporary program.heading)
+             (fun () -> invoke node program inputs ~within) )
 
   class evaluator node =
     object (self)
@@ -284,9 +334,9 @@ module Make (T : TRANSPORT) = struct
       method to_string = "beam-evaluator"
       method parse source = decode source |> Result.map (fun program -> Beam program)
 
-      method eval kind inputs ~within:_ =
+      method eval kind inputs ~within =
         match kind with
-        | Beam program -> generate node program inputs
+        | Beam program -> generate node program inputs ~within
         | _ -> Error (Error.not_a_program ())
 
       method protocols : Protocols.Handle.protocol list = [Protocols.Evaluator.make self]
@@ -295,7 +345,7 @@ module Make (T : TRANSPORT) = struct
   (* \karuta is the subsystem's root, and its programs name the evaluator karuta:beam. *)
   let register root transport =
     let open Utilities.Result in
-    let node = {transport; readers= Hashtbl.create 8; last= 0} in
+    let node = {root; transport; readers= Hashtbl.create 8; last= 0} in
     let* _ = Kernel.Initialization.mount root subsystem in
     let* _ =
       Kernel.Path.update root
