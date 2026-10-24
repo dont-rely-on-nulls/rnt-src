@@ -1,0 +1,23 @@
+RNT is going for a route of a microkernel, and here is one use case
+for its servers: imagine a subsystem A and subsystem B. Each register
+an evaluator and has their specific program image execution from their
+own server, operating under an RNT supervisor. A program image from
+subsystem A should be able to invoke and interop with programs from B,
+as they both share the common ephemeral relation protocol.
+
+A more concrete case that is warranted is Sakura and Karuta. Here is a
+brief introduction of what each is:
+
+- Sakura :: A purely relational algebra system that performs strictly
+  first order logic for data retrieval, and integrates other
+  subsystems for DDL, DML and version control.
+- Karuta :: A logic language targeting the BEAM, similar to Prolog,
+  but that operates under microKanren.
+
+Karuta compiles programs to a /.beam/ format, and embeds them with two
+additional /.lfe/ files: karuta.lfe & sakura.lfe, and executes them with
+/play/ lfescript that glues all together.
+
+Our goal with the subsystem integration is to make Karuta produce
+Sakura programs (it already does), that can be loaded as program
+images on RNT, executing through the registered evaluator.
