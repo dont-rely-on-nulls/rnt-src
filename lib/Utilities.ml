@@ -92,6 +92,10 @@ module FingerTree = struct
       (fun acc elem ->
         match f elem with None -> acc | Some result -> BatFingerTree.snoc acc result)
       BatFingerTree.empty
+
+  let concat_map f =
+    BatFingerTree.fold_left (fun acc elem -> BatFingerTree.append acc @@ f elem) BatFingerTree.empty
+
 end
 
 module Atomic = struct
