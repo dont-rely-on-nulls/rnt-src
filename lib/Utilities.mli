@@ -35,6 +35,7 @@ module FingerTree : sig
   val sequence : ('a, 'b) result BatFingerTree.t -> ('a BatFingerTree.t, 'b) result
   val foldm_left : ('a -> 'b -> ('a, 'e) result) -> 'a -> 'b BatFingerTree.t -> ('a, 'e) result
   val join : string BatFingerTree.t -> string -> string
+  val filter_map : ('a -> 'b option) -> 'a BatFingerTree.t -> 'b BatFingerTree.t
 end
 
 module Fun : sig

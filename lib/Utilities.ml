@@ -86,6 +86,12 @@ module FingerTree = struct
 
   let join ss sep =
     BatFingerTree.print ~first:"" ~last:"" ~sep BatIO.nwrite |> Fun.flip BatIO.to_string ss
+
+  let filter_map f =
+    BatFingerTree.fold_left
+      (fun acc elem ->
+        match f elem with None -> acc | Some result -> BatFingerTree.snoc acc result)
+      BatFingerTree.empty
 end
 
 module Atomic = struct
