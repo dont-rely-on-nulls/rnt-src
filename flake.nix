@@ -55,7 +55,11 @@
         });
 
       devShells = forAllSystems (pkgs:
-        let ocamlPackages = pkgs.ocamlPackages; in
+        let
+          ocamlPackages = pkgs.ocamlPackages;
+          # LFE does not support OTP 28 yet.
+          beamPackages = pkgs.beam27Packages;
+        in
         {
           default = pkgs.mkShell {
             inputsFrom = [ self.packages.${pkgs.system}.default ];
@@ -65,7 +69,9 @@
               utop
               qcheck-core
               qcheck-alcotest
-            ]);
+            ]) ++ [ beamPackages.erlang beamPackages.lfe pkgs.erlang-language-platform ];
+            # The karuta subsystem's node runs on erl, which finds LFE here.
+            ERL_LIBS = "${beamPackages.lfe}/lib";
           };
         });
     };

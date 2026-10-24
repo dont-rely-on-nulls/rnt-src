@@ -3,4 +3,4 @@
 (library
  (name subsystem)
  (public_name rnt.subsystem)
- (libraries rnt batteries))
+ (libraries rnt batteries unix))
