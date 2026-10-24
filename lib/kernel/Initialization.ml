@@ -20,12 +20,11 @@ let namespace entries =
    evaluators, and whatever else it registers beside them. *)
 let mount root name =
   match Path.lookup root Path.(name @/ this) with
-  | Ok mounted -> Ok mounted
+  | Ok mounted -> Ok (Protocols.Handle.release mounted)
   | Error _ ->
       let open Utilities.Result in
       let* mounted = namespace ["evaluator", Namespace.make ()] in
-      let* () = bind root (name, mounted) in
-      Ok mounted
+      bind root (name, mounted)
 
 module Make (S : Abstract.Storage.STORAGE) = struct
   module BM = BranchManager.Make (S)

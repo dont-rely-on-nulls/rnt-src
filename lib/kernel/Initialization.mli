@@ -1,7 +1,6 @@
 (** a subsystem's root, \[name], holding \[name]\evaluator for the
-    evaluators it registers. Mounting it again gives the one there. *)
-val mount :
-  Protocols.Handle.t -> string -> (Protocols.Handle.t, Concepts.Condition.condition) result
+    evaluators it registers. Mounting it again keeps the one there. *)
+val mount : Protocols.Handle.t -> string -> (unit, Concepts.Condition.condition) result
 
 module Make (S : Abstract.Storage.STORAGE) : sig
   (** the root of the object tree, holding \system: its branches, of

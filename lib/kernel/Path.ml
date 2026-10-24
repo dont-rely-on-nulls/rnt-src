@@ -22,6 +22,10 @@ module Error = struct
     condition "overlapping-change"
       "A batch of changes both replaced an object and changed inside it"
       ("path" |=| Concepts.Value.String (to_string path))
+
+  let unheld path =
+    condition "path-unheld" "The object at the path could not be held"
+      ("path" |=| Concepts.Value.String (to_string path))
 end
 
 let walking ?missing f g handle path =
@@ -42,7 +46,11 @@ let walking ?missing f g handle path =
         | Some elem -> f x handle (fun () -> walk elem xs) )
   in
   Handle.with_autorelease (fun () ->
-      walk handle path
+      begin match path with
+      | [] -> (
+        match Handle.copy handle with Some copy -> g copy | None -> Error (Error.unheld path) )
+      | _ -> walk handle path
+      end
       |> Result.map_error
            Concepts.Condition.(complement ("path" |=| Concepts.Value.String (to_string path))) )
 
@@ -55,8 +63,9 @@ let update handle path key reference value =
   let open Utilities.Result in
   let open Protocols in
   let* target = lookup handle path in
-  let* registry = Handle.require Registry.from target in
-  Registry.update registry key reference value
+  Handle.releasing target (fun () ->
+      let* registry = Handle.require Registry.from target in
+      Registry.update registry key reference value )
 
 (* The changes at this object, and those beneath each child they reach. *)
 let split changes =
