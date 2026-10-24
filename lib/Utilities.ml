@@ -55,7 +55,7 @@ module List = struct
 
   include Generic (ListSequence)
 
-  let concat_map f xs = List.map f xs |> sequence |> Stdlib.Result.map List.concat
+  let concat_mapm f xs = List.map f xs |> sequence |> Stdlib.Result.map List.concat
   let hd_opt = function x :: _ -> Some x | [] -> None
 end
 
@@ -92,6 +92,8 @@ module FingerTree = struct
       (fun acc elem ->
         match f elem with None -> acc | Some result -> BatFingerTree.snoc acc result)
       BatFingerTree.empty
+
+  let concat_mapm f xs = BatFingerTree.map f xs |> sequence |> Stdlib.Result.map BatFingerTree.append
 
   let concat_map f =
     BatFingerTree.fold_left (fun acc elem -> BatFingerTree.append acc @@ f elem) BatFingerTree.empty
