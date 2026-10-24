@@ -6,14 +6,12 @@ end
 
 module Option = struct
   let ( let* ) = Option.bind
-  let fmap f m = Option.bind m f
   let ( |>> ) = Option.bind
   let sequence = function None -> Ok None | Some x -> Result.map Option.some x
 end
 
 module Result = struct
   let ( let* ) = Result.bind
-  let fmap f m = Result.bind m f
   let ( |>> ) = Result.bind
 end
 

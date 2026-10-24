@@ -7,7 +7,6 @@ end
 module Result : sig
   val ( let* ) : ('a, 'e) result -> ('a -> ('b, 'e) result) -> ('b, 'e) result
   val ( |>> ) : ('a, 'e) result -> ('a -> ('b, 'e) result) -> ('b, 'e) result
-  val fmap : ('a -> ('b, 'e) result) -> ('a, 'e) result -> ('b, 'e) result
 end
 
 module List : sig
@@ -20,7 +19,6 @@ end
 module Option : sig
   val ( let* ) : 'a option -> ('a -> 'b option) -> 'b option
   val ( |>> ) : 'a option -> ('a -> 'b option) -> 'b option
-  val fmap : ('a -> 'b option) -> 'a option -> 'b option
   val sequence : ('a, 'b) result option -> ('a option, 'b) result
 end
 

@@ -87,14 +87,14 @@ functor
         as_string t
         |> Result.map String.to_bytes
         |> Result.map Concepts.Blob.blob_of_bytes
-        |> fmap K.decode
+        |>> K.decode
       in
       let decode_value t = as_string t |> Result.map Concepts.Hash.of_raw_string in
       let decode_list f data =
         data
-        |> fmap as_list
+        |>> as_list
         |> Result.map (List.map f)
-        |> fmap Utilities.List.sequence
+        |>> Utilities.List.sequence
         |> Result.map BatFingerTree.of_list
       in
       function
@@ -108,7 +108,7 @@ functor
           Ok (Trunk {keys; children})
       | _ -> Error (Error.malformed_node ())
 
-    let from_blob blob = Concepts.Encoding.Bencode.of_blob blob |> Utilities.Result.fmap of_bencode
+    let from_blob blob = Utilities.Result.(Concepts.Encoding.Bencode.of_blob blob |>> of_bencode)
 
     let to_bencode =
       let open Concepts.Encoding.Bencode in
@@ -381,7 +381,7 @@ functor
 
     let rec shrink tx = function
       | Trunk {children; _} when BatFingerTree.size children = 1 ->
-          Utilities.Result.fmap (shrink tx) (find' tx (BatFingerTree.get children 0))
+          Result.bind (find' tx (BatFingerTree.get children 0)) (shrink tx)
       | node -> Ok node
 
     let remove tx key node =
@@ -454,7 +454,7 @@ functor
       let* () = S.put tx (S.Hash addr) data in
       Ok addr
 
-    let retrieve tx addr = SI.get_req tx (S.Hash addr) |> fmap V.decode
+    let retrieve tx addr = SI.get_req tx (S.Hash addr) |>> V.decode
     let find = Tree.find
     let from x = x
     let into x = x
@@ -470,7 +470,7 @@ functor
     let of_list tx bindings =
       List.map (fun (k, v) -> intern tx v |> Result.map (fun addr -> k, addr)) bindings
       |> Utilities.List.sequence
-      |> fmap (Tree.of_list tx)
+      |>> Tree.of_list tx
 
     let remove = Tree.remove
 

@@ -50,14 +50,13 @@ module Make (S : Abstract.Storage.STORAGE) = struct
     let of_fields fields =
       let open Utilities.Result in
       let open Concepts.Encoding in
-      let* multigroups = Bencode.field "multigroups" fields |> fmap Value.hash_of_bencode in
+      let* multigroups = Bencode.field "multigroups" fields |>> Value.hash_of_bencode in
       let* previous =
         Bencode.field "previous" fields
-        |> fmap
-             (Value.option_of_bencode (fun v ->
-                  Value.hash_of_bencode v
-                  |> Result.map (fun hash -> S.Hash hash)
-                  |> Result.map (SI.Pointer.make Loader.load) ) )
+        |>> Value.option_of_bencode (fun v ->
+                Value.hash_of_bencode v
+                |> Result.map (fun hash -> S.Hash hash)
+                |> Result.map (SI.Pointer.make Loader.load) )
       in
       Ok {multigroups; previous}
   end
@@ -65,7 +64,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
   and Loader : sig
     val load : S.transaction -> S.address -> (t, Concepts.Condition.condition) result
   end = struct
-    let load tx addr = SI.get_req tx addr |> Utilities.Result.fmap Representation.of_blob
+    let load tx addr = Utilities.Result.(SI.get_req tx addr |>> Representation.of_blob)
   end
 
   let pointer_of hash = SI.Pointer.make Loader.load (S.Hash hash)
@@ -73,7 +72,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
   let node_of tx branch =
     let open Utilities.Result in
     MultigroupM.find tx branch.multigroups
-    |> fmap (Option.to_result ~none:(Error.incomplete_branch branch.multigroups))
+    |>> Option.to_result ~none:(Error.incomplete_branch branch.multigroups)
 
   (* Given [root], the stored programs of this state run through the
      evaluators registered under it, against this very state, so an
@@ -144,7 +143,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
                     update_only (fun node' ->
                         Handle.require Addressable.from node'
                         |> Result.map Addressable.address
-                        |> fmap (fun addr -> self#deriving {branch with multigroups= addr}) ) ) ] );
+                        |>> (fun addr -> self#deriving {branch with multigroups= addr}) ) ) ] );
             Directory.make
               object
                 method list =

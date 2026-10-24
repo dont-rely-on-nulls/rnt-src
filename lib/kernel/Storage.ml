@@ -51,5 +51,5 @@ module Make (S : Abstract.Storage.STORAGE) = struct
     Ok address
 
   let get_req tx addr =
-    S.get tx addr |> Utilities.Result.fmap (Option.to_result ~none:(Error.missing_data addr))
+    Utilities.Result.(S.get tx addr |>> Option.to_result ~none:(Error.missing_data addr))
 end

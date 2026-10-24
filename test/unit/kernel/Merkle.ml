@@ -16,8 +16,8 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let* node =
           T.empty
           |> T.insert tx "k1" "v1"
-          |> fmap (T.insert tx "k2" "v2")
-          |> fmap (T.insert tx "k3" "v3")
+          |>> T.insert tx "k2" "v2"
+          |>> T.insert tx "k3" "v3"
         in
         let* node' = T.insert tx "k3" "toodles" node in
         let* v1 = T.lookup tx "k1" node in
@@ -75,8 +75,8 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let* node =
           T.empty
           |> T.insert tx "k1" "v1"
-          |> fmap (T.insert tx "k2" "v2")
-          |> fmap (T.insert tx "k3" "v3")
+          |>> (T.insert tx "k2" "v2")
+          |>> (T.insert tx "k3" "v3")
         in
         let* () = S.commit tx in
         Ok (T.hash_of node)
@@ -107,8 +107,8 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let* node =
           T.empty
           |> T.insert tx "k1" "v1"
-          |> fmap (T.insert tx "k2" "v2")
-          |> fmap (T.insert tx "k3" "v3")
+          |>> (T.insert tx "k2" "v2")
+          |>> (T.insert tx "k3" "v3")
         in
         let* keys = T.fold_left tx (fun acc k _ -> k :: acc) [] node |> Result.map List.rev in
         let* values = T.fold_left tx (fun acc _ v -> v :: acc) [] node |> Result.map List.rev in
@@ -135,13 +135,13 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         let* tx = S.start conn in
         let key i = Printf.sprintf "k%03d" i in
         let all = List.init 300 key in
-        let* full = List.fold_left (fun node k -> fmap (T.insert tx k k) node) (Ok T.empty) all in
+        let* full = List.fold_left (fun node k -> node |>> T.insert tx k k) (Ok T.empty) all in
         let evens = List.filteri (fun i _ -> i mod 2 = 0) all in
-        let* half = List.fold_left (fun node k -> fmap (T.remove tx k) node) (Ok full) evens in
+        let* half = List.fold_left (fun node k -> node |>> T.remove tx k) (Ok full) evens in
         let* kept = T.lookup tx (key 1) half in
         let* gone = T.lookup tx (key 2) half in
         let* keys = T.keys tx half in
-        let* none = List.fold_left (fun node k -> fmap (T.remove tx k) node) (Ok half) all in
+        let* none = List.fold_left (fun node k -> node |>> T.remove tx k) (Ok half) all in
         let* () = S.abort tx in
         Ok (kept, gone, BatFingerTree.to_list keys, T.hash_of none)
       end

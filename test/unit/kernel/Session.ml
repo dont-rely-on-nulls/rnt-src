@@ -39,7 +39,7 @@ module Make (S : Abstract.Storage.STORAGE) (C : Helpers.Storage.CONFIGURATOR) = 
         Protocols.Session.pin interface {Protocols.Session.snapshot= tip'};
         let after = finds root library in
         let* pinned =
-          lookup root ("system" @/ "session" @/ "client" @/ "branch" @/ this) |> fmap address
+          lookup root ("system" @/ "session" @/ "client" @/ "branch" @/ this) |>> address
         in
         let refused =
           assoc session ("branch" @/ "multigroup" @/ this) "other" (Some multigroup)

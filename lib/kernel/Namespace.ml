@@ -25,9 +25,10 @@ class namespace =
     method list = Atomic.get entries |> BatMap.keys |> BatFingerTree.of_enum |> Result.ok
 
     method find key =
+      let open Utilities.Option in
       Atomic.get entries
       |> BatMap.find_opt key
-      |> Utilities.Option.fmap Protocols.Handle.copy
+      |>> Protocols.Handle.copy
       |> Result.ok
   end
 

@@ -49,9 +49,9 @@ module Persisted = struct
       let open Utilities.Result in
       let open Concepts.Encoding in
       let* name = Field.require_string "name" fields in
-      let* schematics = Bencode.field "schema" fields |> fmap Value.hash_of_bencode in
+      let* schematics = Bencode.field "schema" fields |>> Value.hash_of_bencode in
       let* evaluator = Field.require_string "evaluator" fields in
-      let* code = Bencode.field "program" fields |> fmap Value.hash_of_bencode in
+      let* code = Bencode.field "program" fields |>> Value.hash_of_bencode in
       Ok {name; schematics; pointer= {evaluator; code}}
   end
 end

@@ -53,13 +53,13 @@ let rec term_of_bencode =
   | Bencode.Tagged ('b', segments) ->
       strings segments |> Result.map (fun segments -> Base (Kernel.Path.of_list segments))
   | Bencode.Tagged ('p', data) ->
-      let* term = Bencode.field "term" data |> fmap term_of_bencode in
-      let* attributes = Bencode.field "attributes" data |> fmap strings in
+      let* term = Bencode.field "term" data |>> term_of_bencode in
+      let* attributes = Bencode.field "attributes" data |>> strings in
       Ok (Project (term, BatFingerTree.of_list attributes))
   | _ -> Error (Error.malformed_program ())
 
 let encode term = bencode_of_term term |> Bencode.to_bytes |> Bytes.to_string
-let decode source = Bencode.of_bytes (Bytes.of_string source) |> Utilities.Result.fmap term_of_bencode
+let decode source = Utilities.Result.(Bencode.of_bytes (Bytes.of_string source) |>> term_of_bencode)
 
 (* TODO: To strenghten our checks for self references, we need to
    construct a graph and see raise a condition if there are self
@@ -105,7 +105,7 @@ let rec describe =
   let open Utilities.Result in
   function
   | Base relation -> Protocols.Relation.heading relation
-  | Project (plan, attributes) -> describe plan |> fmap (restrict attributes)
+  | Project (plan, attributes) -> describe plan |>> restrict attributes
 
 let rec modes =
   let open Utilities.Result in

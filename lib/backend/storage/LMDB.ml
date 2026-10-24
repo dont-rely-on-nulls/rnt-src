@@ -146,8 +146,8 @@ let parse (c : Concepts.Configuration.term) =
   let open Concepts.Configuration in
   let open Utilities.Result in
   let* config = as_dictionary c "lmdb" in
-  let* path = value_for "path" config |> fmap as_string in
-  let* mode = value_for "mode" config |> fmap as_int in
+  let* path = value_for "path" config |>> as_string in
+  let* mode = value_for "mode" config |>> as_int in
   Ok (path, mode)
 
 (* directories are traversable wherever they are readable *)

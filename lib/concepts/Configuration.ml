@@ -62,7 +62,7 @@ let as_dictionary t tag : (dictionary, Condition.condition) result =
         | p -> Error (Error.malformed_pair p) )
       pairs (Ok BatMap.empty)
   in
-  strip_tag tag t |> fmap as_dictionary'
+  strip_tag tag t |>> as_dictionary'
 
 let as_string = function Atom s -> Ok s | form -> Error (Error.expected_atom form)
 

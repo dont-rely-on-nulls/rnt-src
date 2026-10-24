@@ -67,8 +67,8 @@ module Make (S : Abstract.Storage.STORAGE) = struct
     let of_fields data =
       let open Utilities.Result in
       let open Concepts.Encoding in
-      let* type_ = Bencode.field "type" data |> fmap Bencode.as_string in
-      let* attributes = Bencode.field "attributes" data |> fmap Value.hash_of_bencode in
+      let* type_ = Bencode.field "type" data |>> Bencode.as_string in
+      let* attributes = Bencode.field "attributes" data |>> Value.hash_of_bencode in
       Ok {type_; attributes}
   end
 
@@ -80,7 +80,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
   let node tx {attributes; _} =
     let open Utilities.Result in
     AttributeM.find tx attributes
-    |> fmap (Option.to_result ~none:(Error.incomplete_tuple attributes))
+    |>> Option.to_result ~none:(Error.incomplete_tuple attributes)
 
   let empty tx ~type_ () =
     let open Utilities.Result in

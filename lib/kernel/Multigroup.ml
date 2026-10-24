@@ -90,8 +90,8 @@ module Make (S : Abstract.Storage.STORAGE) = struct
     let of_fields fields =
       let open Utilities.Result in
       let open Concepts.Encoding in
-      let* schemas = Bencode.field "schemas" fields |> fmap Value.hash_of_bencode in
-      let* denials = Bencode.field "denials" fields |> fmap Value.hash_of_bencode in
+      let* schemas = Bencode.field "schemas" fields |>> Value.hash_of_bencode in
+      let* denials = Bencode.field "denials" fields |>> Value.hash_of_bencode in
       Ok {schemas; denials}
   end)
 
@@ -100,7 +100,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
 
   let node_of tx addr =
     let open Utilities.Result in
-    T.find tx addr |> fmap (Option.to_result ~none:(Error.incomplete addr))
+    T.find tx addr |>> Option.to_result ~none:(Error.incomplete addr)
 
   (* What [h] holds under [property], each to store once the write has
      begun, and the tree they make when it has. *)
@@ -116,9 +116,10 @@ module Make (S : Abstract.Storage.STORAGE) = struct
     |> Utilities.List.sequence
 
   let tree_of tx admissions =
+    let open Utilities.Result in
     List.map (fun (name, store) -> store tx |> Result.map (fun addr -> name, addr)) admissions
     |> Utilities.List.sequence
-    |> Utilities.Result.fmap (T.of_list tx)
+    |>> T.of_list tx
 
   let admit_schema _ h =
     let open Utilities.Result in
@@ -229,7 +230,7 @@ module Make (S : Abstract.Storage.STORAGE) = struct
         let derive f node' =
           Protocols.Handle.require Protocols.Addressable.from node'
           |> Result.map Protocols.Addressable.address
-          |> fmap (fun addr -> self#deriving (f addr))
+          |>> (fun addr -> self#deriving (f addr))
         in
         Protocols.
           [ Addressable.make self;

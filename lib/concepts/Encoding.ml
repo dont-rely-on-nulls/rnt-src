@@ -206,7 +206,7 @@ module Value = struct
 
   let hash_of_bencode value =
     let open Utilities.Result in
-    Bencode.with_tag 'h' value |> fmap Bencode.as_string |> Result.map Hash.of_raw_string
+    Bencode.with_tag 'h' value |>> Bencode.as_string |> Result.map Hash.of_raw_string
 
   let bencode_of_option f option =
     Bencode.Tagged ('?', Option.map f option |> Option.to_list |> fun x -> Bencode.List x)
@@ -214,15 +214,15 @@ module Value = struct
   let option_of_bencode f value =
     let open Utilities.Result in
     Bencode.with_tag '?' value
-    |> fmap Bencode.as_list
+    |>> Bencode.as_list
     |> Result.map Utilities.List.hd_opt
-    |> fmap (function None -> Ok None | Some v -> f v |> Result.map Option.some)
+    |>> (function None -> Ok None | Some v -> f v |> Result.map Option.some)
 end
 
 module Field = struct
   let string value = Bencode.String value
   let address address = Bencode.String (Hash.to_raw_string address)
-  let require_string key data = Bencode.field key data |> Utilities.Result.fmap Bencode.as_string
+  let require_string key data = Utilities.Result.(Bencode.field key data |>> Bencode.as_string)
 
   let require_address ~malformed key data =
     let open Utilities.Result in
@@ -264,8 +264,8 @@ module Record = struct
       | _ -> Error (B.malformed ())
 
     let to_blob object_ = to_bencode object_ |> Bencode.to_blob
-    let of_blob blob = Bencode.of_blob blob |> Utilities.Result.fmap of_bencode
+    let of_blob blob = Utilities.Result.(Bencode.of_blob blob |>> of_bencode)
     let to_bytes object_ = to_blob object_ |> Blob.bytes_of_blob
-    let of_bytes bytes = Bencode.of_bytes bytes |> Utilities.Result.fmap of_bencode
+    let of_bytes bytes = Utilities.Result.(Bencode.of_bytes bytes |>> of_bencode)
   end
 end

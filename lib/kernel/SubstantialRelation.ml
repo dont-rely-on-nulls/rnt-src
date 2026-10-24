@@ -61,8 +61,8 @@ module Make (S : Abstract.Storage.STORAGE) = struct
     let of_fields fields =
       let open Utilities.Result in
       let open Concepts.Encoding in
-      let* schematics = Bencode.field "schema" fields |> fmap Value.hash_of_bencode in
-      let* tuples = Bencode.field "tuples" fields |> fmap Value.hash_of_bencode in
+      let* schematics = Bencode.field "schema" fields |>> Value.hash_of_bencode in
+      let* tuples = Bencode.field "tuples" fields |>> Value.hash_of_bencode in
       Ok {schematics; tuples}
   end
 

@@ -120,8 +120,9 @@ module Directory = struct
            method list = SI.with_read storage (Fun.flip Tree.keys node)
 
            method find k =
+             let open Utilities.Result in
              SI.with_read storage (fun tx -> Tree.lookup tx k node)
-             |> Utilities.Result.fmap (function
+             |>> (function
                | None -> Ok None
                | Some x -> constructor x |> Result.map Option.some )
          end

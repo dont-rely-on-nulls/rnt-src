@@ -30,8 +30,8 @@ and Body : Encoding.Record.BODY = struct
 
   let of_fields data =
     let open Utilities.Result in
-    let* type_ = Encoding.Bencode.field "type" data |> fmap Encoding.Bencode.as_string in
-    let* kvs = Encoding.Bencode.field "attributes" data |> fmap Encoding.Bencode.as_dict in
+    let* type_ = Encoding.Bencode.field "type" data |>> Encoding.Bencode.as_string in
+    let* kvs = Encoding.Bencode.field "attributes" data |>> Encoding.Bencode.as_dict in
     kvs
     |> List.map (fun (name, v) -> value_of_bencode v |> Result.map (fun v -> name, v))
     |> Utilities.List.sequence
