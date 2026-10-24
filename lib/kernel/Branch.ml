@@ -143,21 +143,10 @@ module Make (S : Abstract.Storage.STORAGE) = struct
                     update_only (fun node' ->
                         Handle.require Addressable.from node'
                         |> Result.map Addressable.address
-                        |>> (fun addr -> self#deriving {branch with multigroups= addr}) ) ) ] );
-            Directory.make
-              object
-                method list =
-                  Ok
-                    (BatFingerTree.of_list
-                       ( "multigroup"
-                       :: Option.fold ~none:[] ~some:(fun _ -> ["previous"]) branch.previous ) )
-
-                method find =
-                  function
-                  | "multigroup" -> Ok (Some multigroups)
-                  | "previous" -> self#previous
-                  | _ -> Ok None
-              end ]
+                        |>> fun addr -> self#deriving {branch with multigroups= addr} ) ) ] );
+            Prototype.Directory.of_properties'
+              [ ("multigroup", fun () -> Ok (Some multigroups));
+                ("previous", fun () -> self#previous) ] ]
 
       method hash = Representation.to_blob branch |> Concepts.Hash.hash_of_blob
       method address = self#hash

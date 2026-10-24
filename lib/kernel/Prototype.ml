@@ -87,13 +87,16 @@ module Associative = struct
 end
 
 module Directory = struct
-  let of_properties props =
+  let of_properties' props =
     Protocols.Directory.make
     @@ object
          val props = BatList.to_seq props |> BatMap.of_seq
          method list = Ok (BatMap.keys props |> BatFingerTree.of_enum)
-         method find k = Ok (BatMap.find_opt k props)
+         method find k = match BatMap.find_opt k props with None -> Ok None | Some f -> f ()
        end
+
+  let of_properties props =
+    List.map (fun (p, h) -> p, fun () -> Ok (Some h)) props |> of_properties'
 
   let children directory =
     let open Utilities.Result in
@@ -122,9 +125,7 @@ module Directory = struct
            method find k =
              let open Utilities.Result in
              SI.with_read storage (fun tx -> Tree.lookup tx k node)
-             |>> (function
-               | None -> Ok None
-               | Some x -> constructor x |> Result.map Option.some )
+             |>> function None -> Ok None | Some x -> constructor x |> Result.map Option.some
          end
   end
 end

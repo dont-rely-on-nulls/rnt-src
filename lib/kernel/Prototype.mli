@@ -6,6 +6,10 @@ val mixture : Protocols.Handle.protocol list -> Protocols.Handle.t
 module Directory : sig
   val of_properties : (string * Protocols.Handle.t) list -> Protocols.Handle.protocol
 
+  val of_properties' :
+    (string * (unit -> (Protocols.Handle.t option, Concepts.Condition.condition) result)) list ->
+    Protocols.Handle.protocol
+
   (** the names a directory lists, and what each reaches. *)
   val children :
     Protocols.Handle.t -> ((string * Protocols.Handle.t) list, Concepts.Condition.condition) result
