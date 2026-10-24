@@ -2,4 +2,4 @@
 
 (test
  (name test_rnt)
- (libraries rnt alcotest qcheck-core qcheck-alcotest batteries))
+ (libraries rnt subsystem alcotest qcheck-core qcheck-alcotest batteries))

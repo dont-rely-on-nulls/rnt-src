@@ -7,6 +7,7 @@ let all_suites =
   @ Unit.Kernel.Session.suites ()
   @ Unit.Kernel.Branch.suites ()
   @ Unit.Evaluators.FOL.suites ()
+  @ Unit.Karuta.Translator.suites ()
   @ Integration.Registration.suites ()
 
 let () = Alcotest.run "RNT" all_suites

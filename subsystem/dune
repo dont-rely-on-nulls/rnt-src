@@ -1,0 +1,6 @@
+(include_subdirs qualified)
+
+(library
+ (name subsystem)
+ (public_name rnt.subsystem)
+ (libraries rnt batteries))
