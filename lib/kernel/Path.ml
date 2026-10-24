@@ -120,7 +120,7 @@ let assoc_all handle changes =
         in
         (* each step derives from the last; only the steps in between are
            ours to release *)
-        Utilities.List.fold_left
+        Utilities.List.foldm_left
           (fun current change ->
             let* next = assoc_on current change in
             if current != node then Handle.release current;

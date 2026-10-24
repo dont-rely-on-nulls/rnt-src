@@ -328,7 +328,7 @@ functor
       let open Utilities.Result in
       with_batch tx (fun () ->
           let* _ = empty_under tx in
-          Utilities.List.fold_left
+          Utilities.List.foldm_left
             (fun node (key, value) -> insert tx key value node)
             empty bindings )
 
@@ -340,7 +340,7 @@ functor
           |> BatFingerTree.fold_left (fun acc (k, v) -> f acc k v) acc
           |> Result.ok
       | Trunk {children; _} ->
-          Utilities.FingerTree.fold_left
+          Utilities.FingerTree.foldm_left
             (fun acc addr ->
               let* node = find' tx addr in
               fold_left tx f acc node )

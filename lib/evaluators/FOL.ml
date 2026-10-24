@@ -92,7 +92,7 @@ let instantiate within =
 
 let restrict attributes description =
   let open Utilities.Result in
-  Utilities.FingerTree.fold_left
+  Utilities.FingerTree.foldm_left
     (fun restricted name ->
       let* attribute =
         BatMap.String.find_opt name description

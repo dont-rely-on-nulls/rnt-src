@@ -7,12 +7,14 @@ end
 module Option = struct
   let ( let* ) = Option.bind
   let fmap f m = Option.bind m f
+  let ( |>> ) = Option.bind
   let sequence = function None -> Ok None | Some x -> Result.map Option.some x
 end
 
 module Result = struct
   let ( let* ) = Result.bind
   let fmap f m = Result.bind m f
+  let ( |>> ) = Result.bind
 end
 
 module type SEQUENCE = sig
@@ -20,21 +22,21 @@ module type SEQUENCE = sig
 
   val empty : 'a t
   val cons : 'a -> 'a t -> 'a t
-  val fold : ('a -> 'b -> 'b) -> 'a t -> 'b -> 'b
+  val fold_right : ('a -> 'b -> 'b) -> 'a t -> 'b -> 'b
   val fold_left : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
 end
 
 module Generic (S : SEQUENCE) = struct
   let sequence ms =
     let open Result in
-    S.fold
+    S.fold_right
       (fun m acc ->
         let* acc = acc in
         let* m = m in
         Ok (S.cons m acc) )
       ms (Ok S.empty)
 
-  let fold_left f init ms =
+  let foldm_left f init ms =
     let open Result in
     S.fold_left
       (fun acc m ->
@@ -49,7 +51,7 @@ module List = struct
 
     let empty = []
     let cons x xs = x :: xs
-    let fold = List.fold_right
+    let fold_right = List.fold_right
     let fold_left = List.fold_left
   end
 
@@ -65,7 +67,7 @@ module FingerTree = struct
 
     let empty = BatFingerTree.empty
     let cons x xs = BatFingerTree.cons xs x
-    let fold f xs acc = BatFingerTree.fold_right (Fun.flip f) acc xs
+    let fold_right f xs acc = BatFingerTree.fold_right (Fun.flip f) acc xs
     let fold_left = BatFingerTree.fold_left
   end
 
