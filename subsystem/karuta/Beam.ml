@@ -52,7 +52,7 @@ module Port = struct
   let start ?(erl = "erl") directories =
     let boot =
       "try [{module, _} = code:load_abs(filename:rootname(F)) || D <- init:get_plain_arguments(), \
-       F <- filelib:wildcard(D ++ \"/*.beam\")], 'rnt-node':start() catch C:R:S -> \
+       F <- filelib:wildcard(D ++ \"/*.beam\")], rnt:start() catch C:R:S -> \
        io:format(standard_error, \"~p:~p~n~p~n\", [C, R, S]), halt(1) end."
     in
     match
