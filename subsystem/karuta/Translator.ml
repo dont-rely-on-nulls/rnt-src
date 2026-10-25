@@ -40,7 +40,7 @@ let encode {Concepts.Tuple.type_; attributes} =
 
 exception Malformed
 
-let decode bytes =
+let read arity bytes =
   let position = ref 0 in
   let take n =
     if !position + n > String.length bytes then raise Malformed;
@@ -91,13 +91,17 @@ let decode bytes =
   match
     expect 131;
     expect 104;
-    expect 2;
-    expect 109;
-    let type_ = binary () in
+    expect arity;
+    let names = List.init (arity - 1) (fun _ -> expect 109; binary ()) in
     expect 116;
     let attributes = attributes (u32 ()) BatMap.String.empty in
     if !position <> String.length bytes then raise Malformed;
-    {Concepts.Tuple.type_; attributes}
+    names, attributes
   with
-  | tuple -> Ok tuple
-  | exception Malformed -> Error (Error.malformed ())
+  | read -> Some read
+  | exception Malformed -> None
+
+let decode bytes =
+  match read 2 bytes with
+  | Some ([type_], attributes) -> Ok {Concepts.Tuple.type_; attributes}
+  | _ -> Error (Error.malformed ())
