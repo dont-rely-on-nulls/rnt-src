@@ -7,13 +7,13 @@ let value =
     [ Gen.map (fun s -> Concepts.Value.String s) Gen.string_small;
       Gen.map
         (fun n -> Concepts.Value.Integer n)
-        (Gen.oneof [Gen.int; Gen.oneofl [min_int; max_int]]) ]
+        (Gen.oneof [Gen.int; Gen.oneof_list [min_int; max_int]]) ]
 
 let tuple =
   Gen.map2
     (fun type_ attributes -> {Concepts.Tuple.type_; attributes= BatMap.String.of_list attributes})
     Gen.string_small
-    (Gen.small_list (Gen.pair Gen.string_small value))
+    (Gen.list_small (Gen.pair Gen.string_small value))
 
 let print tuple = tuple.Concepts.Tuple.type_ ^ " " ^ Concepts.Tuple.to_string tuple
 
@@ -32,15 +32,12 @@ let a_cut_term_is_refused =
       List.init (String.length bytes) (fun n -> Translator.decode (String.sub bytes 0 n))
       |> List.for_all Result.is_error )
 
-(* term_to_binary writes an integer that fits a byte as 97, and one that
-   fits 32 bits as 98, which encode never does *)
 let erlang_integers_decode =
   QCheck2.Test.make ~name:"an integer as term_to_binary writes it decodes to itself"
     ~print:string_of_int
     (Gen.oneof [Gen.int_range 0 255; Gen.int_range (-0x8000_0000) 0x7fff_ffff])
     (fun n ->
       let term = Buffer.create 32 in
-      (* {<<"t">>, #{<<"n">> => n}} *)
       Buffer.add_string term
         "\131\104\002\109\000\000\000\001t\116\000\000\000\001\109\000\000\000\001n";
       if n >= 0 && n < 256 then begin

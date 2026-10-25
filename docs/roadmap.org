@@ -131,7 +131,10 @@ These do not block the steps above.
 - Programs that change state have no result protocol.
 - Once [[file:../lib/kernel/Merkle.ml][Merkle]] chunking depends only on the tuples a tree holds,
   maintenance can be checked by comparing addresses instead of tuples.
-- =Path.update= keeps the target it looks up and never releases it, so
-  each call leaks one reference to a counted namespace. This came with
-  the lifecycle rework and needs a decision.
+- Storing a relation reads it whole. [[file:../lib/kernel/Multigroup.ml][Multigroup]] admits a relation by
+  draining it with =Relation.read= before the write begins, and
+  [[file:../lib/kernel/SubstantialRelation.ml][SubstantialRelation]] builds its tree from that list. Streaming the
+  cursor into the tree instead would read during the write, holding
+  the writer lock while the relation is computed, and =with_batch=
+  would still keep every node it makes until the batch ends.
 - The signatures in [[file:object-system.org][the object system]] predate the code.
